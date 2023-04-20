@@ -51,3 +51,84 @@ RUN groupadd -g ${DEFAULT_USER_GROUP_TEMP_ID} ${DEFAULT_USER_GROUP_NAME} && \
 
 USER ${DEFAULT_USER_TEMP_ID}
 WORKDIR ${DEFAULT_USER_HOME}
+
+
+# pyenv (from [2]) ----------------
+ENV DEBIAN_FRONTEND=noninteractive
+RUN sudo apt-get update && sudo apt-get install -y \
+    build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev \
+    libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev \
+    xz-utils tk-dev libffi-dev liblzma-dev python-openssl git
+
+RUN curl https://pyenv.run | bash \
+    && echo 'export PATH="${DEFAULT_USER_HOME}/.pyenv/bin:$PATH"' >> ${DEFAULT_USER_HOME}/.bash \
+    && echo 'eval "$(pyenv init -)"' >> ${DEFAULT_USER_HOME}/.bash \
+    && echo 'eval "$(pyenv virtualenv-init -)"' >> ${DEFAULT_USER_HOME}/.bash
+
+RUN . ${DEFAULT_USER_HOME}/.bash && \
+    pyenv install 3.8.0 && \
+    pyenv global 3.8.0 && \
+    pip install -U pip
+
+
+# X window ----------------
+RUN sudo apt-get update && sudo apt-get install -y \
+    xvfb x11vnc python-opengl icewm \
+    && sudo apt-get clean \
+    && sudo rm -rf /var/lib/apt/lists/*
+
+
+# utils ----------------
+RUN sudo apt-get update -q \
+    && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y \
+    curl \
+    git \
+    unzip \
+    vim \
+    wget \
+    ffmpeg \
+    tmux \
+    && sudo apt-get clean \
+    && sudo rm -rf /var/lib/apt/lists/*
+
+COPY .tmux.conf ${DEFAULT_USER_HOME}/
+
+# DL ----------------
+RUN pip install \
+    setuptools \
+    jupyterlab \
+    widgetsnbextension 
+
+#pytorch install ----------------
+RUN pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
+
+#experiment management ----------------
+RUN pip install \
+    mlflow \
+    hydra-core \
+    wandb \
+    joblib \
+    scikit-image
+
+RUN sudo apt-get clean && \
+    sudo rm -rf /var/lib/apt/lists/*
+
+COPY start.sh ${DEFAULT_USER_HOME}
+COPY .tmux.conf ${DEFAULT_USER_HOME}
+
+RUN echo 'Xvfb :0 -screen 0 1400x900x24 & ' >> ${DEFAULT_USER_HOME}/Xvfb-run.sh && \
+    echo 'x11vnc -display :0 -passwd pass -forever &' >> ${DEFAULT_USER_HOME}/run-Xvfb.sh && \
+    chmod +x ${DEFAULT_USER_HOME}/run-Xvfb.sh
+
+RUN echo 'DISPLAY=:0 jupyter notebook --allow-root --ip=0.0.0.0 --port 8888 --notebook-dir=${DEFAULT_USER_HOME} --NotebookApp.password="sha1:71247b1fba50:6334281a44d2134e85492be9ad7426a3cf9caf90" &' >> ${DEFAULT_USER_HOME}/run-jupyter.sh && \
+    chmod +x ${DEFAULT_USER_HOME}/run-jupyter.sh
+
+# auto start tmux and zsh
+ENTRYPOINT tmux new \; \
+            send-keys 'Xvfb :0 -screen 0 1400x900x24 & ' Enter \; \
+	    send-keys 'x11vnc -display :0 -passwd 0123 -forever &' Enter \; \
+            split-window -v  \; \
+            send-keys "jupyter nbextension enable --py widgetsnbextension --sys-prefix" Enter \; \
+            send-keys "bash ${DEFAULT_USER_HOME}/run-jupyter.sh" Enter \; \
+	   new-window \; \
+    	    send-keys clear C-m \;
