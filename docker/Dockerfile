@@ -91,19 +91,24 @@ RUN sudo apt-get update -q \
     && sudo apt-get clean \
     && sudo rm -rf /var/lib/apt/lists/*
 
-COPY .tmux.conf ${DEFAULT_USER_HOME}/
+# COPY .tmux.conf ${DEFAULT_USER_HOME}/
 
 # DL ----------------
-RUN pip install \
+RUN . ${DEFAULT_USER_HOME}/.bash && \
+    pip install \
     setuptools \
     jupyterlab \
-    widgetsnbextension 
+    widgetsnbextension && \
+    echo 'alias jl="DISPLAY=:0 jupyter lab --ip 0.0.0.0 --port 8888 --allow-root &"' >> ${DEFAULT_USER_HOME}/.bash && \
+    echo 'alias tb="tensorboard --logdir runs --bind_all &"' >> ${DEFAULT_USER_HOME}/.bash
 
 #pytorch install ----------------
-RUN pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
+RUN . ${DEFAULT_USER_HOME}/.bash && \
+    pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
 
 #experiment management ----------------
-RUN pip install \
+RUN . ${DEFAULT_USER_HOME}/.bash && \
+    pip install \
     mlflow \
     hydra-core \
     wandb \
@@ -114,7 +119,7 @@ RUN sudo apt-get clean && \
     sudo rm -rf /var/lib/apt/lists/*
 
 COPY start.sh ${DEFAULT_USER_HOME}
-COPY .tmux.conf ${DEFAULT_USER_HOME}
+# COPY .tmux.conf ${DEFAULT_USER_HOME}
 
 RUN echo 'Xvfb :0 -screen 0 1400x900x24 & ' >> ${DEFAULT_USER_HOME}/Xvfb-run.sh && \
     echo 'x11vnc -display :0 -passwd pass -forever &' >> ${DEFAULT_USER_HOME}/run-Xvfb.sh && \
@@ -123,12 +128,16 @@ RUN echo 'Xvfb :0 -screen 0 1400x900x24 & ' >> ${DEFAULT_USER_HOME}/Xvfb-run.sh 
 RUN echo 'DISPLAY=:0 jupyter notebook --allow-root --ip=0.0.0.0 --port 8888 --notebook-dir=${DEFAULT_USER_HOME} --NotebookApp.password="sha1:71247b1fba50:6334281a44d2134e85492be9ad7426a3cf9caf90" &' >> ${DEFAULT_USER_HOME}/run-jupyter.sh && \
     chmod +x ${DEFAULT_USER_HOME}/run-jupyter.sh
 
+RUN sudo cp ${DEFAULT_USER_HOME}/.bash /root/.bash
+
 # auto start tmux and zsh
-ENTRYPOINT tmux new \; \
-            send-keys 'Xvfb :0 -screen 0 1400x900x24 & ' Enter \; \
-	    send-keys 'x11vnc -display :0 -passwd 0123 -forever &' Enter \; \
-            split-window -v  \; \
-            send-keys "jupyter nbextension enable --py widgetsnbextension --sys-prefix" Enter \; \
-            send-keys "bash ${DEFAULT_USER_HOME}/run-jupyter.sh" Enter \; \
-	   new-window \; \
-    	    send-keys clear C-m \;
+# ENTRYPOINT tmux new \; \
+#             send-keys 'Xvfb :0 -screen 0 1400x900x24 & ' Enter \; \
+# 	    send-keys 'x11vnc -display :0 -passwd 0123 -forever &' Enter \; \
+#             split-window -v  \; \
+#             send-keys "bash" Enter \; \
+#             send-keys "jupyter nbextension enable --py widgetsnbextension --sys-prefix" Enter \; \
+#             send-keys "bash ${DEFAULT_USER_HOME}/run-jupyter.sh" Enter \; \
+# 	   new-window \; \
+#             send-keys "bash" Enter \; \
+#     	    send-keys clear C-m \;

@@ -8,7 +8,8 @@ services:
     image: otake_mnist-classifier
     build:
       context: ./
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile_2
       args:
         DEFAULT_USER_TEMP_ID: 1010
         DEFAULT_USER_GROUP_TEMP_ID: 1010
+    tty: true
