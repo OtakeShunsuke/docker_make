@@ -69,6 +69,8 @@ RUN groupadd -g ${GID} ${GROUPNAME} && \
 USER ${USERNAME}
 WORKDIR /home/${USERNAME}/
 
+SHELL ["/bin/bash", "-c"]
+
 # # pyenv (from [2]) ----------------
 ENV DEBIAN_FRONTEND=noninteractive
 RUN sudo apt-get update && sudo apt-get install -y \
@@ -79,13 +81,17 @@ RUN sudo apt-get update && sudo apt-get install -y \
 RUN curl https://pyenv.run | bash \
     && echo 'export PATH="${DEFAULT_USER_HOME}/.pyenv/bin:$PATH"' >> ${DEFAULT_USER_HOME}/.bash_profile \
     && echo 'eval "$(pyenv init -)"' >> ${DEFAULT_USER_HOME}/.bash_profile \
-    && echo 'eval "$(pyenv virtualenv-init -)"' >> ${DEFAULT_USER_HOME}/.bash_profile 
+    && echo 'eval "$(pyenv virtualenv-init -)"' >> ${DEFAULT_USER_HOME}/.bash_profile \
+    && source ${DEFAULT_USER_HOME}/.bash_profile
 
-RUN . ${DEFAULT_USER_HOME}/.bash_profile && \
+RUN source ${DEFAULT_USER_HOME}/.bash_profile && \
     pyenv install 3.8.0 && \
     pyenv global 3.8.0 && \
     pip install -U pip
 
+RUN sudo cp ${DEFAULT_USER_HOME}/.bash_profile /root/.bash_profile
+
+CMD ["/bin/bash"]
 
 # # X window ----------------
 # # RUN sudo apt-get update && sudo apt-get install -y \
