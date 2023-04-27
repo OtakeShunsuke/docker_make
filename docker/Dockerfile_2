@@ -79,17 +79,23 @@ RUN sudo apt-get update && sudo apt-get install -y \
     xz-utils tk-dev libffi-dev liblzma-dev python-openssl git
 
 RUN curl https://pyenv.run | bash \
-    && echo 'export PATH="${DEFAULT_USER_HOME}/.pyenv/bin:$PATH"' >> ${DEFAULT_USER_HOME}/.bash_profile \
-    && echo 'eval "$(pyenv init -)"' >> ${DEFAULT_USER_HOME}/.bash_profile \
-    && echo 'eval "$(pyenv virtualenv-init -)"' >> ${DEFAULT_USER_HOME}/.bash_profile \
-    && source ${DEFAULT_USER_HOME}/.bash_profile
+    && echo 'export PATH="${DEFAULT_USER_HOME}/.pyenv/bin:$PATH"' >> ${DEFAULT_USER_HOME}/.profile \
+    && echo 'eval "$(pyenv init -)"' >> ${DEFAULT_USER_HOME}/.profile \
+    && echo 'eval "$(pyenv virtualenv-init -)"' >> ${DEFAULT_USER_HOME}/.profile \
+    && source ${DEFAULT_USER_HOME}/.profile
 
-RUN source ${DEFAULT_USER_HOME}/.bash_profile && \
+ENV PATH /home/user/.pyenv/plugins/pyenv-virtualenv/shims:/home/user/.pyenv/shims:/home/user/.pyenv/bin:$PATH\
+    eval "$(pyenv init -)"\
+    eval "$(pyenv virtualenv-init -)"
+
+RUN echo $PATH
+
+RUN source ${DEFAULT_USER_HOME}/.profile && \
     pyenv install 3.8.0 && \
     pyenv global 3.8.0 && \
     pip install -U pip
 
-RUN sudo cp ${DEFAULT_USER_HOME}/.bash_profile /root/.bash_profile
+RUN sudo cp ${DEFAULT_USER_HOME}/.profile /root/.profile
 
 CMD ["/bin/bash"]
 
@@ -107,8 +113,7 @@ CMD ["/bin/bash"]
 #     git \
 #     unzip \
 #     vim \
-#     wget \
-#     ffmpeg \
+#     wget \_
 #     tmux \
 #     && sudo apt-get clean \
 #     && sudo rm -rf /var/lib/apt/lists/*
