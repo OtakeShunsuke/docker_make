@@ -1,1 +1,1 @@
-docker run --name otake_motake_mnist-classifiernist --gpus '"device=0"' -it --shm-size 32G --privileged -p 9888:8888 -p 6900:5900 -p 7006:6006 -p 9265:8265 -p 6000:5000 -v ~/ws/sharespace:/home/docker/sharespace --rm $1 
+docker run --name otake_motake_claifiernist --gpus '"device=0"' -it --shm-size 32G --privileged -p 9888:8888 -p 6900:5900 -p 7006:6006 -p 9265:8265 -p 6000:5000 -v ~/Osaka_University/Lab/Practice/MNIST_clasify:/home/docker/sharespace --rm $1 
