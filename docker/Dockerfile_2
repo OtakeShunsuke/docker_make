@@ -26,9 +26,9 @@ ARG ROOT_USER_PASSWORD=root
 
 # root password is root
 ARG DEFAULT_USER_PASSWORD=password
-ARG DEFAULT_USER_TEMP_ID=9999
+ARG DEFAULT_USER_TEMP_ID=1105
 ARG DEFAULT_USER_GROUP_NAME=docker
-ARG DEFAULT_USER_GROUP_TEMP_ID=65534
+ARG DEFAULT_USER_GROUP_TEMP_ID=501
 
 RUN echo ${ROOT_USER}:${ROOT_USER_PASSWORD} | chpasswd
 WORKDIR /root/
@@ -178,6 +178,6 @@ ENTRYPOINT tmux new \; \
             send-keys "zsh" Enter \; \
             send-keys "jupyter nbextension enable --py widgetsnbextension --sys-prefix" Enter \; \
             send-keys "bash ${DEFAULT_USER_HOME}/run-jupyter.sh" Enter \; \
-	   new-window \; \
+	    new-window \; \
             send-keys "zsh" Enter \; \
     	    send-keys clear C-m \;

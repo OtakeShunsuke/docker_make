@@ -10,5 +10,5 @@ services:
       context: ./
       dockerfile: Dockerfile_2
       args:
-        DEFAULT_USER_TEMP_ID: 1010
-        DEFAULT_USER_GROUP_TEMP_ID: 1010
+        DEFAULT_USER_TEMP_ID: 1105
+        DEFAULT_USER_GROUP_TEMP_ID: 501
