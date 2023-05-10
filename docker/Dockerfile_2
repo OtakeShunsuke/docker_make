@@ -23,12 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Root user setting
 ENV ROOT_USER=root
 ARG ROOT_USER_PASSWORD=root
-
-# root password is root
-ARG DEFAULT_USER_PASSWORD=password
-ARG DEFAULT_USER_TEMP_ID=1105
-ARG DEFAULT_USER_GROUP_NAME=docker
-ARG DEFAULT_USER_GROUP_TEMP_ID=501
+ENV ROOT_HOME=/${ROOT_USER}
 
 RUN echo ${ROOT_USER}:${ROOT_USER_PASSWORD} | chpasswd
 WORKDIR /root/
@@ -54,34 +49,6 @@ RUN apt-get update -q \
 SHELL ["/bin/zsh", "-c"]
 RUN wget http://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh -O - | zsh
 
-
-#Add default user
-#root権限以外のユーザの作成
-ENV DEFAULT_USER=docker
-ENV DEFAULT_USER_HOME=/home/${DEFAULT_USER}
-
-
-RUN groupadd -g ${DEFAULT_USER_GROUP_TEMP_ID} ${DEFAULT_USER_GROUP_NAME} && \
-    useradd -m -s /bin/bash -u ${DEFAULT_USER_TEMP_ID} -g ${DEFAULT_USER_GROUP_TEMP_ID} -G sudo ${DEFAULT_USER} && \
-    echo ${DEFAULT_USER}:${DEFAULT_USER_PASSWORD} | chpasswd && \
-    echo "${DEFAULT_USER}   ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
-
-USER ${DEFAULT_USER_TEMP_ID}
-WORKDIR ${DEFAULT_USER_HOME}
-
-# zsh (from [1]) ----------------
-RUN sudo apt-get update -q \
-    && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y \
-    wget \
-    git \
-    zsh \
-    && sudo apt-get clean \
-    && sudo rm -rf /var/lib/apt/lists/*
-
-SHELL ["/bin/zsh", "-c"]
-RUN wget http://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh -O - | zsh
-
-
 # # pyenv (from [2]) ----------------
 ENV DEBIAN_FRONTEND=noninteractive
 RUN sudo apt-get update && sudo apt-get install -y \
@@ -90,18 +57,12 @@ RUN sudo apt-get update && sudo apt-get install -y \
     xz-utils tk-dev libffi-dev liblzma-dev python-openssl git
 
 RUN curl https://pyenv.run | zsh \
-    && echo 'export PATH="${DEFAULT_USER_HOME}/.pyenv/bin:$PATH"' >> ${DEFAULT_USER_HOME}/.zshrc \
-    && echo 'eval "$(pyenv init -)"' >> ${DEFAULT_USER_HOME}/.zshrc \
-    && echo 'eval "$(pyenv virtualenv-init -)"' >> ${DEFAULT_USER_HOME}/.zshrc \
-    && source ${DEFAULT_USER_HOME}/.zshrc
+    && echo 'export PATH="${ROOT_HOME}/.pyenv/bin:$PATH"' >> ${ROOT_HOME}/.zshrc \
+    && echo 'eval "$(pyenv init -)"' >> ${ROOT_HOME}/.zshrc \
+    && echo 'eval "$(pyenv virtualenv-init -)"' >> ${ROOT_HOME}/.zshrc \
+    && source ${ROOT_HOME}/.zshrc
 
-# # bashにもPathを通す場合には以下を実行---------------------------------------
-# ENV PATH /home/user/.pyenv/plugins/pyenv-virtualenv/shims:/home/user/.pyenv/shims:/home/user/.pyenv/bin:$PATH\
-#     eval "$(pyenv init -)"\
-#     eval "$(pyenv virtualenv-init -)"
-# ---------------------------------------------------------------------------
-
-RUN source ${DEFAULT_USER_HOME}/.zshrc && \
+RUN source ${ROOT_HOME}/.zshrc && \
     pyenv install 3.8.0 && \
     pyenv global 3.8.0 && \
     pip install -U pip
@@ -125,23 +86,23 @@ RUN sudo apt-get update -q \
     && sudo apt-get clean \
     && sudo rm -rf /var/lib/apt/lists/*
 
-COPY .tmux.conf ${DEFAULT_USER_HOME}/
+COPY .tmux.conf ${ROOT_HOME}/
 
 # DL ----------------
-RUN . ${DEFAULT_USER_HOME}/.zshrc && \
+RUN . ${ROOT_HOME}/.zshrc && \
     pip install \
     setuptools \
     jupyterlab \
     widgetsnbextension && \
-    echo 'alias jl="DISPLAY=:0 jupyter lab --ip 0.0.0.0 --port 8888 --allow-root &"' >> ${DEFAULT_USER_HOME}/.bash && \
-    echo 'alias tb="tensorboard --logdir runs --bind_all &"' >> ${DEFAULT_USER_HOME}/.bash
+    echo 'alias jl="DISPLAY=:0 jupyter lab --ip 0.0.0.0 --port 8888 --allow-root &"' >> ${ROOT_HOME}/.bash && \
+    echo 'alias tb="tensorboard --logdir runs --bind_all &"' >> ${ROOT_HOME}/.bash
 
 #pytorch install ----------------
-RUN . ${DEFAULT_USER_HOME}/.zshrc && \
+RUN . ${ROOT_HOME}/.zshrc && \
     pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
 
 #experiment management ----------------
-RUN . ${DEFAULT_USER_HOME}/.zshrc && \
+RUN . ${ROOT_HOME}/.zshrc && \
     pip install \
     mlflow \
     hydra-core \
@@ -150,25 +111,24 @@ RUN . ${DEFAULT_USER_HOME}/.zshrc && \
     scikit-image
 
 #Install pip install -r requirements.txt
-COPY requirements.txt ${DEFAULT_USER_HOME}/
+COPY requirements.txt ${ROOT_HOME}/
 
-RUN source ${DEFAULT_USER_HOME}/.zshrc && \
+RUN source ${ROOT_HOME}/.zshrc && \
     pip install -r requirements.txt
 
 RUN sudo apt-get clean && \
     sudo rm -rf /var/lib/apt/lists/*
 
-COPY start.sh ${DEFAULT_USER_HOME}
-# COPY .tmux.conf ${DEFAULT_USER_HOME}
+COPY start.sh ${ROOT_HOME}
 
-RUN echo 'Xvfb :0 -screen 0 1400x900x24 & ' >> ${DEFAULT_USER_HOME}/Xvfb-run.sh && \
-    echo 'x11vnc -display :0 -passwd pass -forever &' >> ${DEFAULT_USER_HOME}/run-Xvfb.sh && \
-    chmod +x ${DEFAULT_USER_HOME}/run-Xvfb.sh
+RUN echo 'Xvfb :0 -screen 0 1400x900x24 & ' >> ${ROOT_HOME}/Xvfb-run.sh && \
+    echo 'x11vnc -display :0 -passwd pass -forever &' >> ${ROOT_HOME}/run-Xvfb.sh && \
+    chmod +x ${ROOT_HOME}/run-Xvfb.sh
 
-RUN echo 'DISPLAY=:0 jupyter notebook --allow-root --ip=0.0.0.0 --port 8888 --notebook-dir=${DEFAULT_USER_HOME} --NotebookApp.password="" &' >> ${DEFAULT_USER_HOME}/run-jupyter.sh && \
-    chmod +x ${DEFAULT_USER_HOME}/run-jupyter.sh
+RUN echo 'DISPLAY=:0 jupyter notebook --allow-root --ip=0.0.0.0 --port 8888 --notebook-dir=${ROOT_HOME} --NotebookApp.password="password" &' >> ${ROOT_HOME}/run-jupyter.sh && \
+    chmod +x ${ROOT_HOME}/run-jupyter.sh
 
-RUN sudo cp ${DEFAULT_USER_HOME}/.bash /root/.bash
+
 
 # auto start tmux and zsh
 ENTRYPOINT tmux new \; \
@@ -177,7 +137,7 @@ ENTRYPOINT tmux new \; \
             split-window -v  \; \
             send-keys "zsh" Enter \; \
             send-keys "jupyter nbextension enable --py widgetsnbextension --sys-prefix" Enter \; \
-            send-keys "bash ${DEFAULT_USER_HOME}/run-jupyter.sh" Enter \; \
+            send-keys "bash ${ROOT_HOME}/run-jupyter.sh" Enter \; \
 	    new-window \; \
             send-keys "zsh" Enter \; \
     	    send-keys clear C-m \;

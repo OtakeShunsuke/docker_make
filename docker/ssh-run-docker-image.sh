@@ -1,2 +1,2 @@
 # docker run --name otake_motake_claifiernist --gpus '"cuda:0"' -it --shm-size 32G --privileged -p 9888:8888 -p 6900:5900 -p 7006:6006 -p 9265:8265 -p 6000:5000 -v ~/MNIST_clasify:/home/docker/sharespace --rm $1 
-docker run --name otake_motake_claifiernist --gpus all -it --shm-size 32G --privileged -p 9888:8888 -p 6900:5900 -p 7006:6006 -p 9265:8265 -p 6000:5000 -v /home/otake/MNIST_clasify:/home/otake/sharespace --rm $1 
+docker run --name otake_motake_claifiernist --gpus all -it --shm-size 32G --privileged -p 9888:8888 -p 6900:5900 -p 7006:6006 -p 9265:8265 -p 6000:5000 -v /home/otake/MNIST_clasify:/root/sharespace --rm $1 
