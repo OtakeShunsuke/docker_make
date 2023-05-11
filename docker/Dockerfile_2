@@ -125,7 +125,7 @@ RUN echo 'Xvfb :0 -screen 0 1400x900x24 & ' >> ${ROOT_HOME}/Xvfb-run.sh && \
     echo 'x11vnc -display :0 -passwd pass -forever &' >> ${ROOT_HOME}/run-Xvfb.sh && \
     chmod +x ${ROOT_HOME}/run-Xvfb.sh
 
-RUN echo 'DISPLAY=:0 jupyter notebook --allow-root --ip=0.0.0.0 --port 8888 --notebook-dir=${ROOT_HOME} --NotebookApp.password="password" &' >> ${ROOT_HOME}/run-jupyter.sh && \
+RUN echo 'DISPLAY=:0 jupyter notebook --allow-root --ip=0.0.0.0 --port 8888 --notebook-dir=${ROOT_HOME} --NotebookApp.token="password" &' >> ${ROOT_HOME}/run-jupyter.sh && \
     chmod +x ${ROOT_HOME}/run-jupyter.sh
 
 
